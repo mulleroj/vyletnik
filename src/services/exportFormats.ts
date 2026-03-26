@@ -61,61 +61,85 @@ export function downloadJson(payload: ExportPayload, filename: string): void {
 }
 
 /**
- * PDF – textový souhrn; fotky jako malé náhledy pokud nejsou příliš mnoho.
+ * Jeden PDF soubor: hlavička + všechna stanoviště a úkoly (text i výběry) + všechny fotky jako náhledy.
  */
 export async function exportPdf(payload: ExportPayload, filename: string): Promise<void> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   await ensureRobotoFont(doc);
 
   const margin = 14;
+  const pageBottom = 285;
+  const textWidth = 182;
   let y = margin;
-  const line = (text: string, size = 10) => {
+
+  const newPage = () => {
+    doc.addPage();
+    y = margin;
+  };
+
+  const line = (text: string, size = 10, gapAfter = 2) => {
+    doc.setFont('Roboto', 'normal');
+    doc.setTextColor(10, 10, 10);
     doc.setFontSize(size);
-    const lines = doc.splitTextToSize(text, 180);
+    const lines = doc.splitTextToSize(text, textWidth);
     for (const ln of lines) {
-      if (y > 280) {
-        doc.addPage();
-        y = margin;
-      }
+      if (y > pageBottom - size * 0.5) newPage();
       doc.text(ln, margin, y);
       y += size * 0.45;
     }
-    y += 2;
+    y += gapAfter;
   };
 
-  line('Výletník – export výsledků', 16);
+  line('Výletník – jeden souhrnný PDF', 16);
+  line('Obsahuje výstupy ze všech stanoviští a úkolů včetně fotek.', 9, 3);
   line(`Žák: ${payload.studentName}`);
   line(`Skupina: ${payload.groupName}`);
   line(`Výlet: ${payload.tripTitle}`);
-  line(`Čas exportu: ${payload.exportedAt}`);
+  line(`Čas exportu: ${payload.exportedAt}`, 10, 4);
 
   for (const st of payload.stations) {
-    line(st.stationTitle, 12);
+    line(st.stationTitle, 13, 1);
     for (const t of st.tasks) {
-      line(`• ${t.taskTitle}`);
+      line(`• ${t.taskTitle} (${t.taskType})`, 10, 0.5);
       if (t.textValue) line(`  Odpověď: ${t.textValue}`);
       if (t.choiceLabel != null) line(`  Výběr: ${t.choiceLabel}`);
       if (t.checkboxValue != null) line(`  Zaškrtnuto: ${t.checkboxValue ? 'ano' : 'ne'}`);
-      if (t.photos.length) line(`  Počet fotek: ${t.photos.length} (plné zobrazení v JSON)`);
+      if (!t.textValue && t.choiceLabel == null && t.checkboxValue == null && !t.photos.length) {
+        line('  (bez odpovědi)', 9, 1);
+      }
+      y += 1;
     }
+    y += 2;
   }
 
-  let imgY = y;
+  const hasAnyPhoto = payload.stations.some((st) => st.tasks.some((t) => t.photos.length > 0));
+  if (hasAnyPhoto) {
+    line('— Fotografie ke všem úkolům —', 12, 3);
+  }
+
+  const imgW = 75;
+  const imgH = imgW * 0.75;
+  const captionSize = 8;
+
   for (const st of payload.stations) {
     for (const t of st.tasks) {
-      for (const ph of t.photos.slice(0, 2)) {
+      t.photos.forEach((ph, pi) => {
+        const blockH = imgH + captionSize * 0.45 * 2 + 6;
+        if (y + blockH > pageBottom) newPage();
+
         try {
-          if (imgY > 200) {
-            doc.addPage();
-            imgY = margin;
-          }
           const fmt = ph.dataUrl.toLowerCase().includes('image/png') ? 'PNG' : 'JPEG';
-          doc.addImage(ph.dataUrl, fmt, margin, imgY, 50, 50 * 0.75);
-          imgY += 45;
+          doc.addImage(ph.dataUrl, fmt, margin, y, imgW, imgH);
+          y += imgH + 2;
+          doc.setFontSize(captionSize);
+          doc.setTextColor(70, 70, 70);
+          doc.text(`${st.stationTitle} · ${t.taskTitle}${t.photos.length > 1 ? ` (${pi + 1}/${t.photos.length})` : ''}`, margin, y);
+          y += captionSize * 0.45 + 4;
+          doc.setTextColor(10, 10, 10);
         } catch {
-          line(`(fotku se nepodařilo vložit do PDF: ${ph.id})`);
+          line(`(Fotku se nepodařilo vložit: ${ph.id})`, 9, 2);
         }
-      }
+      });
     }
   }
 

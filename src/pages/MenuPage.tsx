@@ -44,6 +44,12 @@ export function MenuPage() {
 
       <ProgressBar completed={totals.completed} total={totals.total} label="Celkový postup" />
 
+      {totals.total > 0 && totals.completed < totals.total && (
+        <p className="hint menu-export-hint">
+          Výstupy (e-mail, PDF, JSON…) odešleš až v <strong>Souhrnu</strong>, až budou vyplněné všechny úkoly.
+        </p>
+      )}
+
       <ul className="station-list">
         {trip.stations.map((st) => {
           const p = stationProgress(trip, st.id, responseMap);

@@ -21,6 +21,8 @@ export function SummaryPage() {
   const { responseMap } = useTripResponses(trip.id);
   const [msg, setMsg] = useState<string | null>(null);
   const totals = tripTaskCounts(trip, responseMap);
+  /** Jeden společný okamžik odeslání – až po vyplnění všech úkolů (prázdný výlet = výjimka). */
+  const canExportOutputs = totals.total === 0 || totals.completed >= totals.total;
 
   const stationsOverview = useMemo(
     () =>
@@ -50,6 +52,7 @@ export function SummaryPage() {
   };
 
   const onJson = async () => {
+    if (!canExportOutputs) return;
     const payload = await runExport();
     if (!payload) return;
     downloadJson(payload, `vyletnik-${exportBase}.json`);
@@ -57,6 +60,7 @@ export function SummaryPage() {
   };
 
   const onPdf = async () => {
+    if (!canExportOutputs) return;
     const payload = await runExport();
     if (!payload) return;
     await exportPdf(payload, `vyletnik-${exportBase}.pdf`);
@@ -64,6 +68,7 @@ export function SummaryPage() {
   };
 
   const onOutlook = async () => {
+    if (!canExportOutputs) return;
     const payload = await runExport();
     if (!payload) return;
     exportOutlookWebCompose(payload, trip.teacherEmail);
@@ -71,6 +76,7 @@ export function SummaryPage() {
   };
 
   const onMail = async () => {
+    if (!canExportOutputs) return;
     const payload = await runExport();
     if (!payload) return;
     exportMailto(payload, trip.teacherEmail);
@@ -78,6 +84,7 @@ export function SummaryPage() {
   };
 
   const onWebhook = async () => {
+    if (!canExportOutputs) return;
     const payload = await runExport();
     if (!payload) return;
     const r = await submitToWebhook(payload);
@@ -93,7 +100,11 @@ export function SummaryPage() {
       <TechTripHeader
         kicker="EXPORT"
         title="Souhrn výsledků"
-        description="Zkontroluj odpovědi a odešli je učiteli. Plné fotky jsou v JSON."
+        description={
+          canExportOutputs
+            ? 'Všechny úkoly jsou vyplněné. Teď můžeš odeslat nebo stáhnout výstupy. Plné fotky jsou v JSON.'
+            : 'Zkontroluj průběh. Odeslání a export (e-mail, PDF, JSON…) jsou dostupné až po dokončení všech úkolů.'
+        }
         progress={{ done: totals.completed, total: totals.total }}
       />
 
@@ -163,25 +174,37 @@ export function SummaryPage() {
           <IconSend size={20} />
           Odeslat výsledky
         </h2>
+        {!canExportOutputs && totals.total > 0 && (
+          <p className="hint summary-export-gate">
+            <strong>Odeslání a export jsou dostupné až po vyplnění všech úkolů.</strong> Aktuálně {totals.completed}/
+            {totals.total}.{' '}
+            <Link to={`/trip/${trip.id}/menu`}>Zpět na stanoviště</Link>
+          </p>
+        )}
         <p className="hint">
-          Outlook (web) = doporučeno pro školní Microsoft 365; ostatní program = mailto. PDF = přehled; JSON = včetně
-          fotek (může být velký).
+          Outlook (web) = doporučeno pro školní Microsoft 365; ostatní program = mailto. PDF = jeden soubor se všemi úkoly
+          a fotkami; JSON = stejná data, včetně fotek v plné kvalitě (může být velký).
         </p>
         <div className="btn-row btn-row--stack">
-          <button type="button" className="btn btn--accent btn--large btn--icon" onClick={() => void onOutlook()}>
+          <button
+            type="button"
+            className="btn btn--accent btn--large btn--icon"
+            onClick={() => void onOutlook()}
+            disabled={!canExportOutputs}
+          >
             <IconSend size={22} />
             Odeslat v Outlooku (web)
           </button>
-          <button type="button" className="btn btn--secondary btn--large" onClick={() => void onMail()}>
+          <button type="button" className="btn btn--secondary btn--large" onClick={() => void onMail()} disabled={!canExportOutputs}>
             Odeslat e-mailem (jiný program)
           </button>
-          <button type="button" className="btn btn--secondary btn--large" onClick={() => void onPdf()}>
-            Export PDF
+          <button type="button" className="btn btn--secondary btn--large" onClick={() => void onPdf()} disabled={!canExportOutputs}>
+            Stáhnout PDF (vše v jednom)
           </button>
-          <button type="button" className="btn btn--secondary btn--large" onClick={() => void onJson()}>
+          <button type="button" className="btn btn--secondary btn--large" onClick={() => void onJson()} disabled={!canExportOutputs}>
             Stáhnout JSON
           </button>
-          <button type="button" className="btn btn--ghost" onClick={() => void onWebhook()}>
+          <button type="button" className="btn btn--ghost" onClick={() => void onWebhook()} disabled={!canExportOutputs}>
             Webhook (volitelné)
           </button>
         </div>
