@@ -43,13 +43,16 @@ Výstup ve složce `dist/`.
 
 ## Nasazení online
 
-### Netlify
+### Netlify (doporučené: Git → auto deploy)
 
-1. Propoj repozitář s Netlify (nebo nahraj `dist`).
-2. Build command: `npm run build`, publish directory: `dist`.
-3. Volitelně nastav env proměnnou `VITE_SUBMIT_WEBHOOK_URL` pro POST exportu (viz `.env.example`).
+Netlify nedostane kód přímo příkazem `git push`; po **propojení s GitHubem** se při každém pushi na zvolenou větev znovu spustí build a nasadí se `dist/`.
 
-Soubor `netlify.toml` v kořeni projektu obsahuje stejné nastavení.
+1. Na [app.netlify.com](https://app.netlify.com) přihlášení → **Add new site** → **Import an existing project** → **GitHub** → vyber repozitář `mulleroj/vyletnik`.
+2. Netlify načte `netlify.toml`: build `npm run build`, publish `dist`. Větev nech např. **main** → **Deploy**.
+3. **Site configuration** → **Site details** → **Change site name** → zadej **`vyletnik`**. Veřejná adresa bude **`https://vyletnik.netlify.app`** (formát je vždy `název.netlify.app`).
+4. Volitelně v **Site settings** → **Environment variables** přidej `VITE_SUBMIT_WEBHOOK_URL` pro POST export (viz `.env.example`).
+
+Ruční nasazení z počítače (vyžaduje `npx netlify-cli login`): po `npm run build` příkaz `npx netlify-cli deploy --prod --dir=dist` (složka musí být nejdřív propojená se site v Netlify přes `netlify init`).
 
 ### GitHub Pages
 
