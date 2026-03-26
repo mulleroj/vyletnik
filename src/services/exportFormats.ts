@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import type { ExportPayload } from './exportPayload';
+import { ensureRobotoFont } from './pdfFont';
 
 /** Otevře mailto s textovým souhrnem (bez base64 fotek – příliš velké) */
 export function exportMailto(payload: ExportPayload, teacherEmail?: string): void {
@@ -41,6 +42,8 @@ export function downloadJson(payload: ExportPayload, filename: string): void {
  */
 export async function exportPdf(payload: ExportPayload, filename: string): Promise<void> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  await ensureRobotoFont(doc);
+
   const margin = 14;
   let y = margin;
   const line = (text: string, size = 10) => {
