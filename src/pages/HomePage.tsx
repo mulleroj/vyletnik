@@ -152,7 +152,7 @@ export function HomePage() {
       {err && <p className="text-error">{err}</p>}
 
       <section className="section">
-        <h2 className="section__title section__title--tech">Výlety (z webu)</h2>
+        <h2 className="section__title section__title--tech">Výlety</h2>
         <ul className="trip-grid">
           {remoteTrips.map((t) => (
             <li key={t.id}>

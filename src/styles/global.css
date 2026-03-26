@@ -229,12 +229,13 @@ a:hover {
 
 a.tech-header__logo.home-link {
   text-decoration: none;
-  color: inherit;
+  /* currentColor pro IconBolt – nesmí být inherit, jinak se blesk ztratí na tmavém pozadí */
+  color: var(--electric-bright);
 }
 
 a.hero__logo.home-link {
   text-decoration: none;
-  color: inherit;
+  color: var(--electric-bright);
 }
 
 .page {
