@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import QRCode from 'qrcode';
 import { loadTripIndex, type TripIndexEntry } from '../services/tripIndex';
 import { listCustomTripsMeta } from '../db/customTrips';
 import { HomeNavLink } from '../components/HomeNavLink';
@@ -8,9 +9,11 @@ import { HomeNavLink } from '../components/HomeNavLink';
  * Úvodní výběr výletu – serverové + uložené v prohlížeči (průvodce).
  */
 export function HomePage() {
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   const [remoteTrips, setRemoteTrips] = useState<TripIndexEntry[]>([]);
   const [localTrips, setLocalTrips] = useState<{ id: string; title: string }[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [homeQrUrl, setHomeQrUrl] = useState('');
 
   const loadAll = useCallback(async () => {
     setErr(null);
@@ -36,6 +39,19 @@ export function HomePage() {
     return () => window.removeEventListener('vyletnik-custom-trips-changed', onCustom);
   }, [loadAll]);
 
+  useEffect(() => {
+    const path = `${window.location.origin}${window.location.pathname}`;
+    const url = `${path}#/`;
+    setHomeQrUrl(url);
+    const canvas = qrCanvasRef.current;
+    if (!canvas) return;
+    void QRCode.toCanvas(canvas, url, {
+      width: 220,
+      margin: 2,
+      color: { dark: '#0a0a0a', light: '#fffef5' },
+    });
+  }, []);
+
   return (
     <div className="page page--home">
       <header className="hero hero--tech">
@@ -57,6 +73,21 @@ export function HomePage() {
           Vyber aktivní výlet nebo naskenuj QR od učitele. Aplikace běží v prohlížeči, data drží v mobilu.
         </p>
       </header>
+
+      <section className="section section--home-qr" aria-labelledby="home-qr-heading">
+        <h2 id="home-qr-heading" className="section__title section__title--tech">
+          QR na úvod
+        </h2>
+        <p className="hint section__lead">Naskenuj – otevře se tato úvodní stránka na jiném mobilu (stejná adresa jako teď).</p>
+        <div className="card card--panel card--qr home-entry-qr">
+          <canvas ref={qrCanvasRef} aria-label="QR kód na úvodní stránku aplikace" />
+          {homeQrUrl && (
+            <p className="qr-url">
+              <code>{homeQrUrl}</code>
+            </p>
+          )}
+        </div>
+      </section>
 
       {err && <p className="text-error">{err}</p>}
 

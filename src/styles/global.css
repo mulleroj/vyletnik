@@ -1401,6 +1401,14 @@ a.hero__logo.home-link {
   margin-top: 1.35rem;
 }
 
+.section--home-qr {
+  margin-top: 0.85rem;
+}
+
+.home-entry-qr {
+  max-width: 100%;
+}
+
 /* Admin – návod u JSON editoru */
 .admin-help__steps {
   margin: 0 0 0.75rem;
