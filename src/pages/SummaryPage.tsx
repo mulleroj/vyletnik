@@ -4,7 +4,7 @@ import { useTripContext } from '../context/TripContext';
 import { useTripResponses } from '../hooks/useTripResponses';
 import { stationProgress, tripTaskCounts, taskFilled } from '../lib/progress';
 import { buildExportPayload } from '../services/exportPayload';
-import { downloadJson, exportMailto, exportPdf } from '../services/exportFormats';
+import { downloadJson, exportMailto, exportOutlookWebCompose, exportPdf } from '../services/exportFormats';
 import { submitToWebhook } from '../services/webhook';
 import { getProfile } from '../db/session';
 import { taskKey } from '../db/responses';
@@ -63,11 +63,18 @@ export function SummaryPage() {
     setMsg('PDF bylo vygenerováno.');
   };
 
+  const onOutlook = async () => {
+    const payload = await runExport();
+    if (!payload) return;
+    exportOutlookWebCompose(payload, trip.teacherEmail);
+    setMsg('Otevře se Outlook na webu – přihlas se školním Microsoft účtem a odešli.');
+  };
+
   const onMail = async () => {
     const payload = await runExport();
     if (!payload) return;
     exportMailto(payload, trip.teacherEmail);
-    setMsg('Otevře se e-mailový klient.');
+    setMsg('Otevře se výchozí e-mailový program (mailto).');
   };
 
   const onWebhook = async () => {
@@ -156,11 +163,17 @@ export function SummaryPage() {
           <IconSend size={20} />
           Odeslat výsledky
         </h2>
-        <p className="hint">E-mail = textový souhrn; PDF = přehled; JSON = včetně fotek (může být velký).</p>
+        <p className="hint">
+          Outlook (web) = doporučeno pro školní Microsoft 365; ostatní program = mailto. PDF = přehled; JSON = včetně
+          fotek (může být velký).
+        </p>
         <div className="btn-row btn-row--stack">
-          <button type="button" className="btn btn--accent btn--large btn--icon" onClick={() => void onMail()}>
+          <button type="button" className="btn btn--accent btn--large btn--icon" onClick={() => void onOutlook()}>
             <IconSend size={22} />
-            Odeslat e-mailem
+            Odeslat v Outlooku (web)
+          </button>
+          <button type="button" className="btn btn--secondary btn--large" onClick={() => void onMail()}>
+            Odeslat e-mailem (jiný program)
           </button>
           <button type="button" className="btn btn--secondary btn--large" onClick={() => void onPdf()}>
             Export PDF

@@ -200,7 +200,7 @@ export function TripBuilder({ onMessage }: Props) {
             />
           </label>
           <label className="field trip-builder__full">
-            <span className="field__label">E-mail učitele (mailto export)</span>
+            <span className="field__label">E-mail učitele (Outlook / mailto)</span>
             <input
               className="input"
               type="email"

@@ -2,9 +2,9 @@ import { jsPDF } from 'jspdf';
 import type { ExportPayload } from './exportPayload';
 import { ensureRobotoFont } from './pdfFont';
 
-/** Otevře mailto s textovým souhrnem (bez base64 fotek – příliš velké) */
-export function exportMailto(payload: ExportPayload, teacherEmail?: string): void {
-  const subject = encodeURIComponent(`Výletník – ${payload.tripTitle} – ${payload.studentName}`);
+/** Předmět a tělo stejné jako u mailto / Outlooku (bez base64 fotek v textu). */
+export function buildExportEmailContent(payload: ExportPayload): { subject: string; body: string } {
+  const subject = `Výletník – ${payload.tripTitle} – ${payload.studentName}`;
   const bodyLines: string[] = [
     `Žák: ${payload.studentName}`,
     `Skupina: ${payload.groupName}`,
@@ -23,9 +23,32 @@ export function exportMailto(payload: ExportPayload, teacherEmail?: string): voi
       bodyLines.push('');
     }
   }
-  const body = encodeURIComponent(bodyLines.join('\n'));
+  return { subject, body: bodyLines.join('\n') };
+}
+
+/** Otevře výchozí e-mailový klient (mailto). */
+export function exportMailto(payload: ExportPayload, teacherEmail?: string): void {
+  const { subject, body } = buildExportEmailContent(payload);
   const to = teacherEmail ? encodeURIComponent(teacherEmail) : '';
-  window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+  window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/**
+ * Otevře Outlook na webu (Microsoft 365) se stejným textem – po přihlášení školním účtem student odešle z učitelova pole.
+ * Výchozí URL: outlook.office.com; škola může přepsat VITE_OUTLOOK_COMPOSE_BASE.
+ */
+export function exportOutlookWebCompose(payload: ExportPayload, teacherEmail?: string): void {
+  const { subject, body } = buildExportEmailContent(payload);
+  const base =
+    import.meta.env.VITE_OUTLOOK_COMPOSE_BASE?.trim() || 'https://outlook.office.com/mail/deeplink/compose';
+  const params = new URLSearchParams();
+  const to = teacherEmail?.trim();
+  if (to) params.set('to', to);
+  params.set('subject', subject);
+  params.set('body', body);
+  const url = `${base}?${params.toString()}`;
+  const w = window.open(url, '_blank', 'noopener,noreferrer');
+  if (!w) window.location.href = url;
 }
 
 export function downloadJson(payload: ExportPayload, filename: string): void {
