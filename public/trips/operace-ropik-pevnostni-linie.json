@@ -1,0 +1,72 @@
+{
+  "id": "operace-ropik-pevnostni-linie",
+  "schemaVersion": 1,
+  "title": "🪖 OPERACE ŘOPÍK (Pevnostní linie)",
+  "description": "Technické posouzení historického objektu lehkého opevnění vz. 37.",
+  "instructions": "Vyplňte úkoly při prohlídce objektu. U měření signálu uveďte počet „čárek“ podle zobrazení na vašem telefonu nebo popište kvalitu připojení.",
+  "stations": [
+    {
+      "id": "faraday",
+      "title": "1. Faradayova klec",
+      "description": "Porovnejte úroveň mobilního signálu venku a uvnitř bunkru.",
+      "tasks": [
+        {
+          "id": "signal-venku",
+          "title": "Signál venku",
+          "type": "text",
+          "description": "Změřte nebo odhadněte úroveň signálu (počet čárek / popis)."
+        },
+        {
+          "id": "signal-uvnitr",
+          "title": "Signál uvnitř bunkru",
+          "type": "text",
+          "description": "Stejně jako venku – počet čárek nebo popis."
+        },
+        {
+          "id": "signal-proc",
+          "title": "Proč signál klesl?",
+          "type": "text",
+          "description": "Stručně vysvětlete, proč je signál uvnitř jiný než venku."
+        }
+      ]
+    },
+    {
+      "id": "offgrid",
+      "title": "2. Návrh OFF-GRID napájení",
+      "description": "Návrh osvětlení a ventilace v řopíku 12 V bez přípojky.",
+      "tasks": [
+        {
+          "id": "zdroj",
+          "title": "Zdroj energie",
+          "type": "text",
+          "description": "Jak byste zajistili energii pro 12 V soustavu (solár, generátor, jiné)?"
+        },
+        {
+          "id": "akumulator",
+          "title": "Typ akumulátoru",
+          "type": "text",
+          "description": "Jaký typ akumulátoru byste zvolili a proč?"
+        }
+      ]
+    },
+    {
+      "id": "kabel",
+      "title": "3. Kabelová trasa",
+      "description": "Zemní vedení k objektu v kamenitém terénu.",
+      "tasks": [
+        {
+          "id": "hloubka",
+          "title": "Hloubka uložení kabelu",
+          "type": "text",
+          "description": "Do jaké hloubky (cm) byste kabel uložili? Odůvodněte stručně."
+        },
+        {
+          "id": "kryti",
+          "title": "Mechanické krytí (trubka)",
+          "type": "text",
+          "description": "Jaké krytí / materiál trubky byste zvolili vzhledem ke kamenitému terénu?"
+        }
+      ]
+    }
+  ]
+}

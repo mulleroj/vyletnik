@@ -1,0 +1,28 @@
+{
+  "id": "hydroenergetika-prehrada-chribska",
+  "schemaVersion": 1,
+  "title": "💧 HYDROENERGETIKA (Přehrada Chřibská)",
+  "description": "Výpočet energetického potenciálu vodního díla.",
+  "instructions": "Použijte zadané hodnoty a vzorec níže. Výsledek zaokrouhlete rozumně a uveďte v kilowattech (kW).",
+  "stations": [
+    {
+      "id": "vykon-p",
+      "title": "1. Výpočet výkonu (P)",
+      "description": "Předpoklady: spád vody H = 15 m, průtok Q = 0,2 m³/s, účinnost turbíny η = 0,8. Hustota vody ρ = 1000 kg/m³, tíhové zrychlení g = 9,81 m/s².",
+      "tasks": [
+        {
+          "id": "vzorec-postup",
+          "title": "Výpočet (postup)",
+          "type": "text",
+          "description": "Vzorec: P = ρ · g · Q · H · η. Dosadte hodnoty a postupně spočítejte (můžete psát i jednotky)."
+        },
+        {
+          "id": "vysledek-kw",
+          "title": "Výsledek",
+          "type": "text",
+          "description": "Uveďte výkon P v kilowattech (kW), např. ve tvaru: P = … kW."
+        }
+      ]
+    }
+  ]
+}

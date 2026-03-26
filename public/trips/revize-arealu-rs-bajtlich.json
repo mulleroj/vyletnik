@@ -1,0 +1,54 @@
+{
+  "id": "revize-arealu-rs-bajtlich",
+  "schemaVersion": 1,
+  "title": "🏘️ REVIZE AREÁLU (RS Bajtlich)",
+  "description": "Vizuální kontrola elektroinstalace v rekreačním středisku.",
+  "instructions": "Proveďte vizuální kontrolu elektroinstalace v rekreačním středisku. Vyplňte odpovědi u jednotlivých úkolů.",
+  "stations": [
+    {
+      "id": "hds",
+      "title": "1. Hlavní domovní skříň (HDS)",
+      "description": "Zjistěte umístění hlavní domovní skříně a hodnotu hlavního jističe, pokud je čitelný.",
+      "tasks": [
+        {
+          "id": "hds-umisteni",
+          "title": "Umístění HDS",
+          "type": "text",
+          "description": "Kde se hlavní domovní skříň nachází?"
+        },
+        {
+          "id": "hds-jistic",
+          "title": "Hodnota hlavního jističe",
+          "type": "text",
+          "description": "Jakou má hodnotu hlavní jistič (v ampérech), pokud je štítek čitelný? Pokud ne, napište „nečitelné“ nebo důvod."
+        }
+      ]
+    },
+    {
+      "id": "venkovni-osvetleni",
+      "title": "2. Venkovní osvětlení – úspora",
+      "description": "Orientační výpočet úspory při výměně výbojek za LED.",
+      "tasks": [
+        {
+          "id": "led-vypocet",
+          "title": "Výpočet úspory energie (kWh)",
+          "type": "text",
+          "description": "Pokud 10 starých výbojek (150 W) nahradíme LED svítidly (30 W), kolik kWh ušetří areál za 8 hodin svícení? Uveďte postup výpočtu a výsledek."
+        }
+      ]
+    },
+    {
+      "id": "kryti-ip",
+      "title": "3. Krytí IP",
+      "description": "Zásuvky v mokrém prostředí nebo venku.",
+      "tasks": [
+        {
+          "id": "ip-odpoved",
+          "title": "Minimální IP proti stříkající vodě",
+          "type": "text",
+          "description": "Najděte zásuvku v koupelně nebo venku. Jaké by měla mít minimální krytí IP proti stříkající vodě? Uveďte číslo stupně krytí (např. IP44)."
+        }
+      ]
+    }
+  ]
+}

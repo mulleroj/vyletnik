@@ -1,0 +1,35 @@
+{
+  "id": "venkovni-vedeni-cesta-zpet",
+  "schemaVersion": 1,
+  "title": "🌲 VENKOVNÍ VEDENÍ (Cesta zpět)",
+  "description": "Sledujte vedení VN a NN podél cesty.",
+  "instructions": "Postupujte bezpečně podél trasy a zapisujte pozorování u úkolů níže.",
+  "stations": [
+    {
+      "id": "typ-vodicu",
+      "title": "1. Typ vodičů",
+      "description": "Rozlišení mezi holými vodiči a závěsnými kabely na sloupech.",
+      "tasks": [
+        {
+          "id": "odpoved-typ",
+          "title": "Odpověď",
+          "type": "text",
+          "description": "Vidíte na sloupech holá lana (AlFe) nebo izolované závěsné kabely (např. AES)? Popište, co pozorujete."
+        }
+      ]
+    },
+    {
+      "id": "zavady",
+      "title": "2. Závady",
+      "description": "Rizika v okolí vedení.",
+      "tasks": [
+        {
+          "id": "zapis-zavady",
+          "title": "Zápis",
+          "type": "text",
+          "description": "Vidíte nějaké riziko? (Větve v blízkosti vodičů, prasklý izolátor, nakloněný sloup nebo jiné.) Stručně popište."
+        }
+      ]
+    }
+  ]
+}

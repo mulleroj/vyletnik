@@ -1,0 +1,24 @@
+{
+  "trips": [
+    {
+      "id": "revize-arealu-rs-bajtlich",
+      "title": "🏘️ REVIZE AREÁLU (RS Bajtlich)",
+      "path": "revize-arealu-rs-bajtlich.json"
+    },
+    {
+      "id": "operace-ropik-pevnostni-linie",
+      "title": "🪖 OPERACE ŘOPÍK (Pevnostní linie)",
+      "path": "operace-ropik-pevnostni-linie.json"
+    },
+    {
+      "id": "hydroenergetika-prehrada-chribska",
+      "title": "💧 HYDROENERGETIKA (Přehrada Chřibská)",
+      "path": "hydroenergetika-prehrada-chribska.json"
+    },
+    {
+      "id": "venkovni-vedeni-cesta-zpet",
+      "title": "🌲 VENKOVNÍ VEDENÍ (Cesta zpět)",
+      "path": "venkovni-vedeni-cesta-zpet.json"
+    }
+  ]
+}
