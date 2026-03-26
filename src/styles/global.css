@@ -1042,6 +1042,10 @@ a.hero__logo.home-link {
   align-items: stretch;
 }
 
+.btn-row--gap-top {
+  margin-top: 1rem;
+}
+
 /* Výběr */
 .choice-list {
   display: flex;

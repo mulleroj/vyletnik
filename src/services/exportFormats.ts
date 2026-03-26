@@ -1,6 +1,10 @@
 import { jsPDF } from 'jspdf';
 import type { ExportPayload } from './exportPayload';
+import { buildExportPayload } from './exportPayload';
 import { ensureRobotoFont } from './pdfFont';
+import { listTripIdsWithResponses } from '../db/responses';
+import { getProfile } from '../db/session';
+import { loadTripById } from './tripLoader';
 
 /** Předmět a tělo stejné jako u mailto / Outlooku (bez base64 fotek v textu). */
 export function buildExportEmailContent(payload: ExportPayload): { subject: string; body: string } {
@@ -60,21 +64,21 @@ export function downloadJson(payload: ExportPayload, filename: string): void {
   URL.revokeObjectURL(a.href);
 }
 
-/**
- * Jeden PDF soubor: hlavička + všechna stanoviště a úkoly (text i výběry) + všechny fotky jako náhledy.
- */
-export async function exportPdf(payload: ExportPayload, filename: string): Promise<void> {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  await ensureRobotoFont(doc);
+type PdfCtx = {
+  y: number;
+  margin: number;
+  pageBottom: number;
+  textWidth: number;
+};
 
-  const margin = 14;
-  const pageBottom = 285;
-  const textWidth = 182;
-  let y = margin;
+function createPdfHelpers(doc: jsPDF, ctx: PdfCtx) {
+  const margin = ctx.margin;
+  const pageBottom = ctx.pageBottom;
+  const textWidth = ctx.textWidth;
 
   const newPage = () => {
     doc.addPage();
-    y = margin;
+    ctx.y = margin;
   };
 
   const line = (text: string, size = 10, gapAfter = 2) => {
@@ -83,19 +87,37 @@ export async function exportPdf(payload: ExportPayload, filename: string): Promi
     doc.setFontSize(size);
     const lines = doc.splitTextToSize(text, textWidth);
     for (const ln of lines) {
-      if (y > pageBottom - size * 0.5) newPage();
-      doc.text(ln, margin, y);
-      y += size * 0.45;
+      if (ctx.y > pageBottom - size * 0.5) newPage();
+      doc.text(ln, margin, ctx.y);
+      ctx.y += size * 0.45;
     }
-    y += gapAfter;
+    ctx.y += gapAfter;
   };
 
-  line('Výletník – jeden souhrnný PDF', 16);
-  line('Obsahuje výstupy ze všech stanoviští a úkolů včetně fotek.', 9, 3);
-  line(`Žák: ${payload.studentName}`);
-  line(`Skupina: ${payload.groupName}`);
-  line(`Výlet: ${payload.tripTitle}`);
-  line(`Čas exportu: ${payload.exportedAt}`, 10, 4);
+  return { line, newPage };
+}
+
+type TripPdfMode =
+  | { kind: 'single' }
+  | { kind: 'section'; index: number; total: number };
+
+/**
+ * Text + fotky jednoho výletu (bez obálky „souhrn všech výletů“).
+ */
+function appendTripPayloadToPdf(doc: jsPDF, ctx: PdfCtx, payload: ExportPayload, mode: TripPdfMode): void {
+  const { line, newPage } = createPdfHelpers(doc, ctx);
+
+  if (mode.kind === 'single') {
+    line('Výletník – jeden souhrnný PDF', 16);
+    line('Obsahuje výstupy ze všech stanoviští a úkolů včetně fotek.', 9, 3);
+    line(`Žák: ${payload.studentName}`);
+    line(`Skupina: ${payload.groupName}`);
+    line(`Výlet: ${payload.tripTitle}`);
+    line(`Čas exportu: ${payload.exportedAt}`, 10, 4);
+  } else {
+    line(`Výlet ${mode.index + 1} z ${mode.total}: ${payload.tripTitle}`, 14, 2);
+    line(`Čas exportu: ${payload.exportedAt}`, 10, 4);
+  }
 
   for (const st of payload.stations) {
     line(st.stationTitle, 13, 1);
@@ -107,9 +129,9 @@ export async function exportPdf(payload: ExportPayload, filename: string): Promi
       if (!t.textValue && t.choiceLabel == null && t.checkboxValue == null && !t.photos.length) {
         line('  (bez odpovědi)', 9, 1);
       }
-      y += 1;
+      ctx.y += 1;
     }
-    y += 2;
+    ctx.y += 2;
   }
 
   const hasAnyPhoto = payload.stations.some((st) => st.tasks.some((t) => t.photos.length > 0));
@@ -117,6 +139,8 @@ export async function exportPdf(payload: ExportPayload, filename: string): Promi
     line('— Fotografie ke všem úkolům —', 12, 3);
   }
 
+  const margin = ctx.margin;
+  const pageBottom = ctx.pageBottom;
   const imgW = 75;
   const imgH = imgW * 0.75;
   const captionSize = 8;
@@ -125,21 +149,82 @@ export async function exportPdf(payload: ExportPayload, filename: string): Promi
     for (const t of st.tasks) {
       t.photos.forEach((ph, pi) => {
         const blockH = imgH + captionSize * 0.45 * 2 + 6;
-        if (y + blockH > pageBottom) newPage();
+        if (ctx.y + blockH > pageBottom) newPage();
 
         try {
           const fmt = ph.dataUrl.toLowerCase().includes('image/png') ? 'PNG' : 'JPEG';
-          doc.addImage(ph.dataUrl, fmt, margin, y, imgW, imgH);
-          y += imgH + 2;
+          doc.addImage(ph.dataUrl, fmt, margin, ctx.y, imgW, imgH);
+          ctx.y += imgH + 2;
           doc.setFontSize(captionSize);
           doc.setTextColor(70, 70, 70);
-          doc.text(`${st.stationTitle} · ${t.taskTitle}${t.photos.length > 1 ? ` (${pi + 1}/${t.photos.length})` : ''}`, margin, y);
-          y += captionSize * 0.45 + 4;
+          doc.text(`${st.stationTitle} · ${t.taskTitle}${t.photos.length > 1 ? ` (${pi + 1}/${t.photos.length})` : ''}`, margin, ctx.y);
+          ctx.y += captionSize * 0.45 + 4;
           doc.setTextColor(10, 10, 10);
         } catch {
           line(`(Fotku se nepodařilo vložit: ${ph.id})`, 9, 2);
         }
       });
+    }
+  }
+}
+
+/**
+ * Jeden PDF soubor: hlavička + všechna stanoviště a úkoly (text i výběry) + všechny fotky jako náhledy.
+ */
+export async function exportPdf(payload: ExportPayload, filename: string): Promise<void> {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  await ensureRobotoFont(doc);
+
+  const ctx: PdfCtx = { y: 14, margin: 14, pageBottom: 285, textWidth: 182 };
+  appendTripPayloadToPdf(doc, ctx, payload, { kind: 'single' });
+  doc.save(filename);
+}
+
+/**
+ * Jeden PDF se všemi výlety, u kterých má žák v zařízení uložené odpovědi.
+ * Obálka + každý výlet na vlastní stránce (nebo více stranách).
+ */
+export async function exportAllTripsPdf(filename: string): Promise<void> {
+  const profile = await getProfile();
+  if (!profile?.studentName?.trim()) {
+    throw new Error('Nejdřív vyplň jméno žáka v profilu (úvod výletu).');
+  }
+
+  const tripIds = await listTripIdsWithResponses();
+  if (!tripIds.length) {
+    throw new Error('Nejsou uložené žádné odpovědi – nelze sestavit souhrn ze všech výletů.');
+  }
+
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  await ensureRobotoFont(doc);
+
+  const ctx: PdfCtx = { y: 14, margin: 14, pageBottom: 285, textWidth: 182 };
+  const { line } = createPdfHelpers(doc, ctx);
+
+  const exportedAt = new Date().toISOString();
+  line('Výletník – souhrn všech výletů', 16);
+  line('Obsahuje výstupy ze všech výletů s uloženými odpověďmi v tomto zařízení.', 9, 3);
+  line(`Žák: ${profile.studentName}`);
+  line(`Skupina: ${profile.groupName}`);
+  line(`Čas exportu: ${exportedAt}`);
+  line(`Počet výletů v dokumentu: ${tripIds.length}`, 10, 4);
+
+  for (let i = 0; i < tripIds.length; i++) {
+    const tripId = tripIds[i]!;
+    doc.addPage();
+    ctx.y = ctx.margin;
+
+    try {
+      const trip = await loadTripById(tripId);
+      const payload = await buildExportPayload(trip);
+      appendTripPayloadToPdf(doc, ctx, payload, { kind: 'section', index: i, total: tripIds.length });
+    } catch {
+      const { line: errLine } = createPdfHelpers(doc, ctx);
+      errLine(`Výlet ${i + 1} z ${tripIds.length}: ${tripId}`, 14, 2);
+      errLine(
+        'Definici výletu se nepodařilo načíst (chybí JSON nebo uložená kopie). Odpovědi zůstávají v zařízení.',
+        10,
+      );
     }
   }
 

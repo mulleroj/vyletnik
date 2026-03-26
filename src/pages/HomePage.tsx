@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { loadTripIndex, type TripIndexEntry } from '../services/tripIndex';
 import { listCustomTripsMeta } from '../db/customTrips';
+import { exportAllTripsPdf } from '../services/exportFormats';
 import { HomeNavLink } from '../components/HomeNavLink';
 import { IconQr } from '../components/Icons';
 
@@ -19,6 +20,8 @@ export function HomePage() {
   const [localTrips, setLocalTrips] = useState<{ id: string; title: string }[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [homeQrUrl, setHomeQrUrl] = useState('');
+  const [allTripsPdfLoading, setAllTripsPdfLoading] = useState(false);
+  const [allTripsPdfMsg, setAllTripsPdfMsg] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
     setErr(null);
@@ -192,6 +195,36 @@ export function HomePage() {
             Editor výletů (průvodce + JSON)
           </Link>
           <span className="hint">Nejdřív sestav výlet v průvodci a ulož do prohlížeče nebo stáhni JSON pro nasazení.</span>
+        </div>
+        <div className="btn-row btn-row--stack btn-row--gap-top">
+          <button
+            type="button"
+            className="btn btn--large"
+            disabled={allTripsPdfLoading}
+            onClick={() => {
+              setAllTripsPdfMsg(null);
+              setAllTripsPdfLoading(true);
+              const name = `vyletnik-vsechny-vylety-${new Date().toISOString().slice(0, 10)}.pdf`;
+              void exportAllTripsPdf(name)
+                .then(() => {
+                  setAllTripsPdfMsg('PDF se stáhlo.');
+                })
+                .catch((e) => {
+                  setAllTripsPdfMsg(e instanceof Error ? e.message : 'Export se nepodařil.');
+                })
+                .finally(() => setAllTripsPdfLoading(false));
+            }}
+          >
+            {allTripsPdfLoading ? 'Generuji PDF…' : 'Stáhnout PDF ze všech výletů'}
+          </button>
+          <span className="hint">
+            Jeden soubor se všemi výlety, u kterých má žák v tomto zařízení uložené odpovědi (jméno z profilu).
+          </span>
+          {allTripsPdfMsg && (
+            <p className={allTripsPdfMsg.startsWith('PDF') ? 'hint' : 'text-error'} role="status">
+              {allTripsPdfMsg}
+            </p>
+          )}
         </div>
       </section>
     </div>

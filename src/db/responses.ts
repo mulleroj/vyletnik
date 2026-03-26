@@ -6,6 +6,16 @@ export function taskKey(tripId: string, stationId: string, taskId: string): stri
   return `${tripId}::${stationId}::${taskId}`;
 }
 
+/** Jedinečná ID výletů, ke kterým existuje alespoň jeden záznam odpovědi (IndexedDB). */
+export async function listTripIdsWithResponses(): Promise<string[]> {
+  const rows = await db.responses.toArray();
+  const ids = new Set<string>();
+  for (const r of rows) {
+    ids.add(r.tripId);
+  }
+  return Array.from(ids).sort();
+}
+
 export async function getResponse(
   tripId: string,
   stationId: string,
